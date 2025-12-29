@@ -14,6 +14,7 @@ def main():
     
     # Add dummy authorized vehicles for testing
     db.add_authorized_vehicle("KA01AB1234", "Admin User")
+<<<<<<< HEAD
     db.add_authorized_vehicle("B00S8005", "Test User")
     db.add_authorized_vehicle("DL01CD5678", "Test User")
     db.add_authorized_vehicle("MH20EE7602", "Test User")
@@ -24,14 +25,27 @@ def main():
     # Open Camera (0 for webcam, or RTSP url)
     # Using cv2.CAP_DSHOW on Windows can sometimes fix initialization issues
     cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+=======
+    db.add_authorized_vehicle("MH12DE4567", "Test User")
+    
+    # Open Camera (0 for webcam, or RTSP url)
+    cap = cv2.VideoCapture(0)
+>>>>>>> e49d837224c12b189d3970924df55ca2b6ac5a6d
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
     
     if not cap.isOpened():
+<<<<<<< HEAD
         print("[Error] Could not open camera. Please check your webcam connection.")
         return
 
     print("[Ready] Press 'q' to exit. Starting main loop...")
+=======
+        print("[Error] Could not open camera.")
+        return
+
+    print("[Ready] Press 'q' to exit.")
+>>>>>>> e49d837224c12b189d3970924df55ca2b6ac5a6d
     
     # Config
     frame_count = 0
@@ -40,6 +54,7 @@ def main():
     LOG_COOLDOWN = 10 # seconds
 
     while True:
+<<<<<<< HEAD
         # Debug: Print a dot every 60 frames to show life, or on first frame
         if frame_count == 0:
             print("[Debug] Attempting to read first frame...")
@@ -53,18 +68,28 @@ def main():
             print("[Debug] First frame read successfully. Dimensions:", frame.shape)
 
         frame_count += 1
+=======
+        ret, frame = cap.read()
+        if not ret:
+            break
+            
+>>>>>>> e49d837224c12b189d3970924df55ca2b6ac5a6d
         display_frame = frame.copy()
         
         # Only process every Nth frame to save CPU/GPU if needed
         # But we want smooth tracking, so maybe just OCR less often? 
         # For simplicity in this logical loop, we run detection every frame but OCR only on good detections.
         
+<<<<<<< HEAD
         # Performance check: only run detection logic if frame read is fine
         try:
             vehicles = detector.detect_vehicles(frame)
         except Exception as e:
             print(f"[Error] Detection failed: {e}")
             vehicles = []
+=======
+        vehicles = detector.detect_vehicles(frame)
+>>>>>>> e49d837224c12b189d3970924df55ca2b6ac5a6d
         
         for (v_box, v_conf, v_cls) in vehicles:
             x1, y1, x2, y2 = map(int, v_box)
@@ -91,6 +116,7 @@ def main():
                 
                 # Run OCR
                 # Only run OCR if plate resolution is decent
+<<<<<<< HEAD
                 # Lowered thresholds for testing
                 if plate_img.shape[0] > 10 and plate_img.shape[1] > 30:
                     text, conf = ocr.extract_text(plate_img)
@@ -100,40 +126,64 @@ def main():
                         # Debug: Print what we see
                         print(f"[OCR] Detected: '{text}' (Conf: {conf:.2f})")
                         
+=======
+                if plate_img.shape[0] > 20 and plate_img.shape[1] > 60:
+                    text, conf = ocr.extract_text(plate_img)
+                    
+                    if text and conf > 0.4:
+>>>>>>> e49d837224c12b189d3970924df55ca2b6ac5a6d
                         color = (0, 0, 255) # Red for unauthorized
                         status = "Access Denied"
                         
                         is_auth, owner = db.is_authorized(text)
+<<<<<<< HEAD
                         
                         if is_auth:
                             color = (0, 255, 0) # Green for authorized
                             status = f"Access Granted ({owner})"
                             print(f"[Success] Authorized vehicle verified: {text}")
+=======
+                        if is_auth:
+                            color = (0, 255, 0) # Green for authorized
+                            status = f"Access Granted ({owner})"
+>>>>>>> e49d837224c12b189d3970924df55ca2b6ac5a6d
                             
                             # Log to DB with cooldown
                             current_time = time.time()
                             if text not in last_log_time or (current_time - last_log_time[text] > LOG_COOLDOWN):
+<<<<<<< HEAD
                                 db.log_entry(text, location="Main Gate", confidence=conf)
                                 last_log_time[text] = current_time
                                 print(f"[DB] Logged entry for {text}")
                         else:
                              print(f"[Info] Vehicle '{text}' is NOT authorized.")
 
+=======
+                                db.log_entry(text, confidence=conf)
+                                last_log_time[text] = current_time
+                        
+>>>>>>> e49d837224c12b189d3970924df55ca2b6ac5a6d
                         # Display Text
                         cv2.putText(display_frame, f"{text} [{conf:.2f}]", (abs_px1, abs_py1 - 10), 
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
                         cv2.putText(display_frame, status, (abs_px1, abs_py2 + 25), 
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+<<<<<<< HEAD
             else:
                 # Debug: Draw yellow box if vehicle found but NO plate found
                 cv2.rectangle(display_frame, (x1, y1), (x2, y2), (0, 255, 255), 2)
                 cv2.putText(display_frame, "No Plate", (x1, y1+20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+=======
+>>>>>>> e49d837224c12b189d3970924df55ca2b6ac5a6d
 
         # Show Output
         cv2.imshow('ANPR System', display_frame)
         
         if cv2.waitKey(1) & 0xFF == ord('q'):
+<<<<<<< HEAD
             print("[Info] User requested exit.")
+=======
+>>>>>>> e49d837224c12b189d3970924df55ca2b6ac5a6d
             break
             
     cap.release()
