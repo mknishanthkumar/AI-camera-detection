@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANPR Location Service</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #f0f2f5;
+            margin: 0;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #1a1a1a;
+        }
+
+        p {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .btn.denied {
+            background: #dc3545;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .success {
+            color: #28a745;
+        }
+
+        .error {
+            color: #dc3545;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>Vehicle Location</h1>
+        <p>Allow the ANPR system to tag authorized vehicles with your current location?</p>
+        <button id="authBtn" class="btn" onclick="requestLocation()">Allow Location Access new</button>
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        const btn = document.getElementById('authBtn');
+
+        function updateStatus(msg, type) {
+            statusDiv.textContent = msg;
+            statusDiv.className = 'status ' + type;
+        }
+
+        function sendLocation(lat, long) {
+            fetch('/api/location', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lat: lat,
+                    long: long,
+                    timestamp: new Date().toISOString()
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    updateStatus('Location Active & Syncing...', 'success');
+                    btn.textContent = "Location Active";
+                    btn.disabled = true;
+                })
+                .catch(err => {
+                    console.error(err);
+                    updateStatus('Server Disconnected', 'error');
+                });
+        }
+
+        function requestLocation() {
+            // Immediately explicitly send empty to start if desired, 
+            // OR just rely on error callback. 
+            // Better to only send if denied.
+
+            if (!navigator.geolocation) {
+                updateStatus('Geolocation is not supported by your browser', 'error');
+                sendLocation("", ""); // Proceed without loc
+                return;
+            }
+
+            updateStatus('Requesting permission...', '');
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    sendLocation(latitude, longitude);
+                },
+                (error) => {
+                    let msg = 'Location denied.';
+                    if (error.code === error.PERMISSION_DENIED) {
+                        msg = 'Permission denied by user.';
+                    }
+                    console.warn(msg);
+                    // Send empty location to signal backend to proceed
+                    sendLocation("", "");
+
+                    updateStatus(msg, 'error');
+                    btn.classList.add('denied');
+                    btn.textContent = "Access Denied (Proceeding)";
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 27000
+                }
+            );
+        }
+    </script>
+</body>
+
+</html>

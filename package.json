@@ -1,0 +1,14 @@
+{
+    "name": "anpr-location-server",
+    "version": "1.0.0",
+    "description": "Simple location server for ANPR system",
+    "main": "location_server.js",
+    "scripts": {
+        "start": "node location_server.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "cors": "^2.8.5",
+        "body-parser": "^1.20.2"
+    }
+}
